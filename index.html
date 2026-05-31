@@ -1,173 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8">
-    <title>Experiência Híbrida Corrigida: 3D & RA</title>
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
+    <title>Experiência Híbrida: 3D & RA</title>
     <style>
-      /* Interface do Botão Switch */
+      body, html {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        overflow: hidden; font-family: Arial, sans-serif;
+        background-color: #000;
+      }
+      /* O iframe ocupa a tela toda atrás do botão */
+      iframe {
+        width: 100%; height: 100%; border: none;
+        display: block;
+      }
       #switch-container {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 9999;
-        font-family: Arial, sans-serif;
+        position: fixed; bottom: 25px; left: 50%;
+        transform: translateX(-50%); z-index: 9999;
       }
       .btn-switch {
-        background: #222;
-        color: white;
-        border: 2px solid #4CC3D9;
-        padding: 12px 24px;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 30px;
-        cursor: pointer;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+        background: #222; color: white; border: 2px solid #4CC3D9;
+        padding: 14px 28px; font-size: 16px; font-weight: bold;
+        border-radius: 30px; cursor: pointer;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
         transition: all 0.3s ease;
       }
       .btn-switch:hover {
-        background: #4CC3D9;
-        color: #222;
-      }
-
-      /* TRUQUE DO CSS: Controla a visibilidade da webcam de forma limpa */
-      body.modo-web video {
-        opacity: 0 !important;
-        pointer-events: none;
-      }
-      body.modo-ra video {
-        opacity: 1 !important;
+        background: #4CC3D9; color: #222;
       }
     </style>
-
-    <script>
-      // Componente Lógico do Objeto Mutante
-      AFRAME.registerComponent('forma-mutante', {
-        init: function () {
-          var el = this.el;
-          this.formas = ['box', 'cylinder', 'cone', 'sphere'];
-          this.formaAtual = 'box';
-
-          el.addEventListener('click', function () {
-            el.emit('encolher');
-          });
-
-          el.addEventListener('animationcomplete__encolher', () => {
-            let novaForma;
-            do {
-              novaForma = this.formas[Math.floor(Math.random() * this.formas.length)];
-            } while (novaForma === this.formaAtual);
-
-            this.formaAtual = novaForma;
-            el.setAttribute('geometry', 'primitive', novaForma);
-            el.setAttribute('material', 'color', this.getRandomColor());
-            el.emit('crescer');
-          });
-        },
-        getRandomColor: function () {
-          var letters = '0123456789ABCDEF';
-          var color = '#';
-          for (var i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
-          return color;
-        }
-      });
-
-      // Gerenciamento de Alternância de Modos
-      window.addEventListener('DOMContentLoaded', () => {
-        const btn = document.getElementById('btnMode');
-        const cena = document.querySelector('a-scene');
-        const objeto = document.getElementById('objeto');
-        const marcador = document.getElementById('marcador-hiro');
-        const cameraUnica = document.getElementById('camera-principal');
-        const ceuFundo = document.getElementById('ceu-fundo');
-        const chaoWeb = document.getElementById('chao-web');
-        
-        let modoAR = false; // Começa no modo Web 3D padrão
-
-        btn.addEventListener('click', () => {
-          modoAR = !modoAR;
-
-          if (modoAR) {
-            // --- ENTRAR NO MODO REALIDADE AUMENTADA ---
-            btn.innerText = "Mudar para Modo 3D";
-            document.body.classList.remove('modo-web');
-            document.body.classList.add('modo-ra');
-            
-            // Esconde o cenário virtual (céu e chão) para ver a câmera do mundo real
-            ceuFundo.setAttribute('visible', 'false');
-            chaoWeb.setAttribute('visible', 'false');
-            
-            // Move o objeto para dentro do marcador HIRO
-            marcador.appendChild(objeto);
-            objeto.setAttribute('position', '0 0.5 0');
-            objeto.setAttribute('scale', '0.5 0.5 0.5');
-            
-            // Reconfigura os limites da animação para a escala de RA
-            objeto.setAttribute('animation__encolher', 'property: scale; to: 0.01 0.01 0.01; dur: 400; easing: easeInBack; startEvents: encolher');
-            objeto.setAttribute('animation__crescer', 'property: scale; to: 0.5 0.5 0.5; dur: 600; easing: easeOutElastic; startEvents: crescer');
-            
-          } else {
-            // --- ENTRAR NO MODO WEB 3D PADRÃO ---
-            btn.innerText = "Mudar para Realidade Aumentada";
-            document.body.classList.remove('modo-ra');
-            document.body.classList.add('modo-web');
-            
-            // Reativa o céu e o chão virtuais
-            ceuFundo.setAttribute('visible', 'true');
-            chaoWeb.setAttribute('visible', 'true');
-            
-            // Tira o objeto do marcador e devolve para o espaço da cena 3D
-            cena.appendChild(objeto);
-            objeto.setAttribute('position', '0 1.5 -3');
-            objeto.setAttribute('scale', '1 1 1');
-            
-            // Reseta a rotação para não ficar torto com base no movimento do marcador
-            objeto.setAttribute('rotation', '0 0 0');
-            
-            // Reconfigura os limites da animação para a escala Web
-            objeto.setAttribute('animation__encolher', 'property: scale; to: 0.05 0.05 0.05; dur: 400; easing: easeInBack; startEvents: encolher');
-            objeto.setAttribute('animation__crescer', 'property: scale; to: 1 1 1; dur: 600; easing: easeOutElastic; startEvents: crescer');
-          }
-        });
-      });
-    </script>
   </head>
-  
-  <body class="modo-web" style="margin: 0px; overflow: hidden;">
+  <body>
 
     <div id="switch-container">
       <button class="btn-switch" id="btnMode">Mudar para Realidade Aumentada</button>
     </div>
 
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; uiEnabled: false;" vr-mode-ui="enabled: false">
-      
-      <a-sky id="ceu-fundo" color="#ECECEC"></a-sky>
+    <iframe id="viewer" src="modo-web.html"></iframe>
 
-      <a-plane id="chao-web" position="0 0 0" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <script>
+      const btn = document.getElementById('btnMode');
+      const iframe = document.getElementById('viewer');
+      let modoAR = false;
 
-      <a-marker id="marcador-hiro" preset="hiro"></a-marker>
-
-      <a-entity 
-        id="objeto"
-        class="clicavel"
-        forma-mutante
-        geometry="primitive: box" 
-        material="color: #4CC3D9" 
-        position="0 1.5 -3"
-        scale="1 1 1"
-        
-        animation__encolher="property: scale; to: 0.05 0.05 0.05; dur: 400; easing: easeInBack; startEvents: encolher"
-        animation__crescer="property: scale; to: 1 1 1; dur: 600; easing: easeOutElastic; startEvents: crescer"
-        animation__rodar="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
-      </a-entity>
-
-      <a-entity id="camera-principal" camera look-controls>
-        <a-cursor id="cursor" raycaster="objects: .clicavel" material="color: black; shader: flat"></a-cursor>
-      </a-entity>
-
-    </a-scene>
+      btn.addEventListener('click', () => {
+        modoAR = !modoAR;
+        if (modoAR) {
+          btn.innerText = "Mudar para Modo 3D";
+          iframe.src = "modo-ra.html"; // Carrega a cena de RA (ativa a câmera na hora)
+        } else {
+          btn.innerText = "Mudar para Realidade Aumentada";
+          iframe.src = "modo-web.html"; // Desliga a câmera e volta pro 3D clássico
+        }
+      });
+    </script>
   </body>
 </html>
